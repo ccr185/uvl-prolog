@@ -1,4 +1,6 @@
 :- set_prolog_flag(double_quotes, string).
+:- set_prolog_flag(encoding, utf8).
+:- encoding(utf8).
 :- use_module(library(dcg/basics)).
 :- use_module(library(dcg/high_order)).
 :- use_module(lexer).
