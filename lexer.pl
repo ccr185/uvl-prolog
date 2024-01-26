@@ -13,6 +13,10 @@
 :- use_module(library(apply)).
 :- use_module(library(apply_macros)).
 
+%% Main entrypoint for the Lexer
+%% defines lex_uvl(-Tokens,+File) that, given a
+%% Filename, transforms the raw string intro a token list
+%% for further parsing
 lex_uvl(Tokens, File) :-
     phrase_from_file(tokenize(TokensCollected), File),
     flatten(TokensCollected, Tokens).

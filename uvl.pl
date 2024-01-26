@@ -1,3 +1,4 @@
+:- module(uvl, [parse/3]).
 :- set_prolog_flag(double_quotes, string).
 :- set_prolog_flag(encoding, utf8).
 :- encoding(utf8).
@@ -6,9 +7,12 @@
 :- use_module(lexer).
 :- use_module(library(tabling)).
 
+%%Main entrypoint for the parser for UVL files
+%%Is conformant to the grammar as defined in the uvl-parser
+%%repository
 parse(File, AST, Stop) :-
     lex_uvl(Tokens, File), !,
-    phrase(uvl(AST), Tokens, []).
+    phrase(uvl(AST), Tokens, Stop).
 
 uvl(ast(H,F,C)) -->
     header(H),
