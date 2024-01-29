@@ -6,6 +6,7 @@
 :- use_module(library(apply)).
 :- use_module(library(apply_macros)).
 :- use_module(library(yall)).
+:- use_module(library(error)).
 :- use_module(uvl).
 
 print_clif_from_ast(File) :-
@@ -144,3 +145,18 @@ render_equation(gte(E1,E2)) -->
     ["(>= "], render_expression(E1), [" "], render_expression(E2), [")"].
 render_equation(neq(E1,E2)) -->
     ["(!= "], render_expression(E1), [" "], render_expression(E2), [")"].
+
+render_expression(E) --> {is_of_type(integer,E); is_of_type(float,E); is_of_type(string,E)}, [E].
+%% render_expression(integer(E)) --> [E].
+render_expression(string(E)) --> [E]. % Dangerous stuff...
+render_expression(sub_expression(E)) -->
+    ["( "], render_expression(E), [" )"].
+render_expression(add(E1,E2)) -->
+    ["(+ "], render_expression(E1), [" "], render_expression(E2), [" )"].
+render_expression(sub(E1,E2)) -->
+    ["(- "], render_expression(E1), [" "], render_expression(E2), [" )"].
+render_expression(mul(E1,E2)) -->
+    ["(* "], render_expression(E1), [" "], render_expression(E2), [" )"].
+render_expression(div(E1,E2)) -->
+    ["(/ "], render_expression(E1), [" "], render_expression(E2), [" )"].
+%render aggregate expression
