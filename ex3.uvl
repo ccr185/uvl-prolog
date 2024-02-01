@@ -1,6 +1,6 @@
 namespace composition_sub1
 
-includes
+include
 	Boolean
 
 imports

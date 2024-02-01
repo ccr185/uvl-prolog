@@ -6,6 +6,7 @@
 :- use_module(library(dcg/high_order)).
 :- use_module(lexer).
 :- use_module(library(tabling)).
+:- use_module(library(clpfd)).
 
 %%Main entrypoint for the parser for UVL files
 %%Is conformant to the grammar as defined in the uvl-parser
@@ -26,6 +27,7 @@ header(header(namespace(N),includes(In),imports(Im))) -->
 
 namespace(N) --> [namespace], reference(N), !.
 reference(N) --> ([id_strict(N)], !) | ([id_not_strict(N)], !).
+fully_qualified_reference(FQN) --> sequence(reference, [dot], FQN), {length(FQN, Len), Len #> 0}.
 
 includes(Is) --> [include, indent], includes_(Is), [dedent].
 includes_([I|Is]) --> language_level(I), !, includes_(Is).
@@ -62,7 +64,7 @@ features_(
     )|Fs]
 ) -->
     optional(feature_type(FeatureType), {FeatureType = boolean}),
-    reference(N),
+    fully_qualified_reference(N),
     optional(feature_cardinality(Card), {Card = nil}),
     optional(attributes(Attrs), {Attrs = nil}),
     optional(([indent], groups(Gs), [dedent]), {Gs = nil}), !,
@@ -120,13 +122,13 @@ constraint_attr(Cs) --> [constraints], constraint_list(Cs), !.
 :- table constraint/3.
 
 constraint(equation(E)) --> equation(E), !.
-constraint(literal_constraint(C)) --> reference(C).
 constraint(paren_constraint(C)) --> [lparen], constraint(C), [rparen], !.
 constraint(not_constraint(C)) --> [not], constraint(C), !.
 constraint(and_constraint(C1,C2)) --> constraint(C1), [and], constraint(C2), !.
 constraint(or_constraint(C1,C2)) --> constraint(C1), [or], constraint(C2), !.
 constraint(impl_constraint(C1,C2)) --> constraint(C1), [impl], constraint(C2), !.
 constraint(eq_constraint(C1,C2)) --> constraint(C1), [equivalence], constraint(C2), !.
+constraint(literal_constraint(C)) --> fully_qualified_reference(C).
 
 constraint_list(Cs) --> [lbracket], constraint_list_(Cs), [rbracket].
 constraint_list_([C|Cs]) --> constraint(C), [comma], !, constraint_list_(Cs).
@@ -150,7 +152,7 @@ equation(neq(E1,E2)) --> expression(E1), [neq], expression(E2), !.
 
 expression(E) --> ([float(E)] | [integer(E)] | [string(E)]), !.
 expression(E) --> aggregate_function(E), !.
-expression(E) --> reference(E).
+expression(E) --> fully_qualified_reference(E).
 expression(sub_expression(E)) --> [lparen], expression(E), [rparen].
 expression(add(E1,E2)) --> expression(E1), [add], expression(E2), !.
 expression(sub(E1,E2)) --> expression(E1), [sub], expression(E2), !.
@@ -158,16 +160,16 @@ expression(mul(E1,E2)) --> expression(E1), [mul], expression(E2), !.
 expression(div(E1,E2)) --> expression(E1), [div], expression(E2), !.
 
 aggregate_function(sum(ref(R),ref_op(ROP))) -->
-    [sum, lparen], optional((reference(ROP),[comma]), {ROP = nil}),
-    reference(R), [rparen], !.
+    [sum, lparen], optional((fully_qualified_reference(ROP),[comma]), {ROP = nil}),
+    fully_qualified_reference(R), [rparen], !.
 aggregate_function(avg(ref(R),ref_op(ROP))) -->
-    [avg, lparen], optional((reference(ROP),[comma]), {ROP = nil}),
-    reference(R), [rparen], !.
+    [avg, lparen], optional((fully_qualified_reference(ROP),[comma]), {ROP = nil}),
+    fully_qualified_reference(R), [rparen], !.
 aggregate_function(len(ref(R))) -->
-    [len, lparen], reference(R), [rparen], !.
+    [len, lparen], fully_qualified_reference(R), [rparen], !.
 aggregate_function(floor(ref(R))) -->
-    [floor, lparen], reference(R), [rparen], !.
+    [floor, lparen], fully_qualified_reference(R), [rparen], !.
 aggregate_function(ceil(ref(R))) -->
-    [ceil, lparen], reference(R), [rparen], !.
+    [ceil, lparen], fully_qualified_reference(R), [rparen], !.
 
 id(ID) --> [id_strict(ID)] | [id_not_strict(ID)].

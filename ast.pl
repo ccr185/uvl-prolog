@@ -11,9 +11,11 @@
 
 print_clif_from_ast(File) :-
     parse(File, AST, []),
-    print_term(AST,[]),
+    print_term(AST,[]), nl, nl,
+    writeln("Parsing Complete"),
     clif_from_ast(CLIF, AST),
-    print_term(CLIF, []).
+    foldl([C,S,NS]>>string_concat(S,C,NS),CLIF,"",CLIFS),
+    print_term(CLIFS, []).
 
 
 
@@ -38,12 +40,16 @@ feature_sentence(
         attributes(Attrs), group(Gs)
     )
 ) -->
-    feature_var_decl(FeatureType, N, Card),
+    {normalize_name(N, NN)},
+    feature_var_decl(FeatureType, NN, Card),
     %%% Here we would handle the attrs
-    feature_group_sentences(Gs, N).
+    feature_group_sentences(Gs, NN).
 
+% TODO: Take care of normalizing names and fully qualifying them.
+normalize_name([FirstN|Ns], NN) :-
+    foldl([E,S,NS]>>(string_concat(S,".",S1),string_concat(S1,E,NS)),Ns,FirstN,NN).
 
-feature_var_decl(boolean, N, _) --> ["(bool ", N, " )"].
+feature_var_decl(boolean, N, _) --> ["(bool ", N, ")"].
 feature_var_decl(integer, N, nil) --> ["(int ", N, " )"].
 feature_var_decl(integer, N, card(From,To)) --> ["(int (", From, " ", To, ") ", N, " )"].
 feature_var_decl(string, _, _).
@@ -93,9 +99,10 @@ mandatory_group_sentence([F|Fs], N) -->
         F = feature(
             name(FeatName), type(FeatType), cardinality(Card),
             attributes(Attrs), group(FeatGroups)
-        )
+        ),
+        normalize_name(FeatName,FeatNameNorm)
     },
-    ["(= ",N, " ", FeatName, " )"],
+    ["(= ",N, " ", FeatNameNorm, " )"],
     feature_sentence(F),
     mandatory_group_sentence(Fs, N).
 
@@ -107,20 +114,22 @@ optional_group_sentence([F|Fs], N) -->
     optional_group_sentence(Fs,N).
 
 %% Utility
-feature_name(feature(name(N),_,_,_,_),N).
+feature_name(feature(name(N),_,_,_,_),NN) :- normalize_name(N,NN).
 feature_type(feature(_,type(T),_,_,_),T).
 feature_card(feature(_,_,cardinality(Card),_,_),Card).
 feature_attr(feature(_,_,_,attributes(Attrs),_),Attrs).
 feature_group(feature(_,_,_,_,group(FeatGroups)), FeatGroups).
 
 %% Constraints
+%% There is case where there are just no sentences at all
+constraint_sentences(nil) --> [].
 constraint_sentences([]) --> [].
 constraint_sentences([C|Cs]) -->
     constraint_sentence(C),
     constraint_sentences(Cs).
 
 constraint_sentence(equation(E)) --> render_equation(E).
-constraint_sentence(literal_constraint(C)) --> [C].
+constraint_sentence(literal_constraint(C)) --> {normalize_name(C,CN)}, [CN].
 constraint_sentence(paren_constraint(C)) --> constraint_sentence(C).
 constraint_sentence(not_constraint(C)) -->
     ["(not "], constraint_sentence(C), [" )"].
@@ -146,7 +155,10 @@ render_equation(gte(E1,E2)) -->
 render_equation(neq(E1,E2)) -->
     ["(!= "], render_expression(E1), [" "], render_expression(E2), [")"].
 
-render_expression(E) --> {is_of_type(integer,E); is_of_type(float,E); is_of_type(string,E)}, [E].
+render_expression(E) -->
+    {is_of_type(integer,E); is_of_type(float,E); is_of_type(string,E)}, [E].
+render_expression(E) -->
+    {is_of_type(list(string),E), normalize_name(E,NE)}, [NE].
 %% render_expression(integer(E)) --> [E].
 render_expression(string(E)) --> [E]. % Dangerous stuff...
 render_expression(sub_expression(E)) -->
@@ -159,4 +171,17 @@ render_expression(mul(E1,E2)) -->
     ["(* "], render_expression(E1), [" "], render_expression(E2), [" )"].
 render_expression(div(E1,E2)) -->
     ["(/ "], render_expression(E1), [" "], render_expression(E2), [" )"].
-%render aggregate expression
+
+%render aggregate expressions
+%These are very tricky
+%%%% TODO: Figure out what the hell the aditional ref is supposed to represent
+render_expression(sum(ref(R),ref_op(_))) -->
+    ["sum("], {normalize_name(R,RN)}, [RN,")"].
+render_expression(avg(ref(R),ref_op(_))) -->
+    ["avg("], {normalize_name(R,RN)}, [RN,")"].
+render_expression(len(ref(R))) -->
+    ["len("], {normalize_name(R,RN)}, [RN,")"].
+render_expression(floor(ref(R))) -->
+    ["floor("], {normalize_name(R,RN)}, [RN,")"].
+render_expression(ceil(ref(R))) -->
+    ["ceil("], {normalize_name(R,RN)}, [RN,")"].

@@ -12,6 +12,7 @@
 :- use_module(library(yall)).
 :- use_module(library(apply)).
 :- use_module(library(apply_macros)).
+:- use_module(library(portray_text)).
 
 %% Main entrypoint for the Lexer
 %% defines lex_uvl(-Tokens,+File) that, given a
@@ -127,7 +128,7 @@ keyword(Token) -->
     ("group-cardinality", {Token = group_card}, !) |
     ("feature-cardinality", {Token = feature_card}, !) |
     ("aggregate-function", {Token = agg_fun}, !) |
-    ("string-constraints", {Token = string_constraints}, !),
+    ("string-constraints", {Token = string_constraints}, !) |
     ("namespace", {Token = namespace}, !) |
     ("include", {Token = include}, !) |
     ("imports", {Token = imports}, !) |
@@ -151,7 +152,7 @@ keyword(Token) -->
     ("Boolean", {Token = boolean_t}, !) |
     ("Arithmetic", {Token = arithmetic_t}, !) |
     ("Type", {Token = type_t}, !) |
-    ("true", {Token = lit_true}, !),
+    ("true", {Token = lit_true}, !) |
     ("false", {Token = lit_false}, !).
 
 %Double Char Toks
