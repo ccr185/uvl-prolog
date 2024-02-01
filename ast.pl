@@ -43,7 +43,20 @@ feature_sentence(
     {normalize_name(N, NN)},
     feature_var_decl(FeatureType, NN, Card),
     %%% Here we would handle the attrs
+    feature_attr_sentences(Attrs, NN),
     feature_group_sentences(Gs, NN).
+
+%% Entry
+feature_attr_sentences([], _) --> [].
+feature_attr_sentences([Attr|Attrs], NN) -->
+    feature_attr_sentence(Attr, NN),
+    feature_attr_sentences(Attrs, NN).
+
+%% Value attr
+feature_attr_sentence(attr(key(K),val(V)), NN) -->
+    feature_attr_var_decl(K, V, NN).
+
+feature_attr_var_decl(K, nil, NN) --> [""].
 
 % TODO: Take care of normalizing names and fully qualifying them.
 normalize_name([FirstN|Ns], NN) :-
