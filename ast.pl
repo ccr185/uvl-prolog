@@ -47,6 +47,7 @@ feature_sentence(
     feature_group_sentences(Gs, NN).
 
 %% Entry
+feature_attr_sentences(nil, _) --> [].
 feature_attr_sentences([], _) --> [].
 feature_attr_sentences([Attr|Attrs], NN) -->
     feature_attr_sentence(Attr, NN),
