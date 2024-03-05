@@ -1,4 +1,4 @@
-:- module(ast, []).
+:- module(ast, [print_clif_from_ast/2]).
 :- set_prolog_flag(double_quotes, string).
 :- set_portray_text(enabled, true).
 :- use_module(library(dcg/high_order)).
@@ -9,7 +9,7 @@
 :- use_module(library(error)).
 :- use_module(uvl).
 
-print_clif_from_ast(File) :-
+print_clif_from_ast(File, CLIFS) :-
     parse(File, AST, []),
     print_term(AST,[]), nl, nl,
     writeln("Parsing Complete"),
