@@ -64,8 +64,8 @@ feature_attr_var_decl(K, nil, NN) --> [""].
 normalize_name([FirstN|Ns], NN) :-
     foldl([E,S,NS]>>(string_concat(S,".",S1),string_concat(S1,E,NS)),Ns,FirstN,NN).
 
-feature_var_decl(boolean, N, _, root) --> ["(bool ", N, ")"].
-feature_var_decl(boolean, N, _, leaf) --> ["(bool ", N, ")", "(= ", N, "1)"].
+feature_var_decl(boolean, N, _, leaf) --> ["(bool ", N, ")"].
+feature_var_decl(boolean, N, _, root) --> ["(bool ", N, ")", "(= ", N, " 1)"].
 feature_var_decl(integer, N, nil, _) --> ["(int ", N, " )"].
 feature_var_decl(integer, N, card(From,To), _) --> ["(int (", From, " ", To, ") ", N, " )"].
 feature_var_decl(string, _, _, _).
