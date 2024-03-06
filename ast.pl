@@ -87,7 +87,7 @@ feature_group_sentence(alternative(Fs), N) -->
         ), FNames)
     },
     ["(=< ("], v_sum(FNames), [" ) ", N, " )"],
-    feature_sentences(Fs).
+    feature_sentences(Fs, leaf).
 feature_group_sentence(optional(Fs), N) -->
     optional_group_sentence(Fs, N).
 feature_group_sentence(or_group(Fs), N) -->
@@ -101,7 +101,7 @@ feature_group_sentence(cardinality(card(From,To),Fs), N) -->
     },
     ["(=< ( "], v_sum(FNames), [" ) ( ", N, "*", To, " ) )"],
     ["(=< ( ", N, "*", From, " ) ( "], v_sum(FNames), [ " )"],
-    feature_sentences(Fs).
+    feature_sentences(Fs, leaf).
 
 %%This case is probably unnecessary.
 v_sum([]) --> [].
@@ -119,14 +119,14 @@ mandatory_group_sentence([F|Fs], N) -->
         normalize_name(FeatName,FeatNameNorm)
     },
     ["(= ",N, " ", FeatNameNorm, " )"],
-    feature_sentence(F),
+    feature_sentence(F, leaf),
     mandatory_group_sentence(Fs, N).
 
 optional_group_sentence([],_) --> [].
 optional_group_sentence([F|Fs], N) -->
     {feature_name(F,FName)},
     ["(>= ", N, " ", FName, ")"],
-    feature_sentence(F),
+    feature_sentence(F, leaf),
     optional_group_sentence(Fs,N).
 
 %% Utility
