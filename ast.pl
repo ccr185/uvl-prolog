@@ -25,23 +25,24 @@ clif_from_ast(CLIF, AST) :-
 ast_gen(
     ast(header(namespace(N),includes(In),imports(Im)),Features,Constraints)
 ) -->
-      feature_sentences(Features),
+      feature_sentences(Features, root),
       constraint_sentences(Constraints).
 
-feature_sentences(nil) --> [].
-feature_sentences([]) --> [].
-feature_sentences([Feature|Fs]) -->
-    feature_sentence(Feature),
-    feature_sentences(Fs).
+feature_sentences(nil, _) --> [].
+feature_sentences([], _) --> [].
+feature_sentences([Feature|Fs], HierarchyPosition) -->
+    feature_sentence(Feature, HierarchyPosition),
+    {HierarchyPosition = root -> HP1 = leaf; HP1 = HierarchyPosition},
+    feature_sentences(Fs, HP1).
 
 feature_sentence(
     feature(
         name(N), type(FeatureType), cardinality(Card),
         attributes(Attrs), group(Gs)
-    )
+    ), HierarchyPosition
 ) -->
     {normalize_name(N, NN)},
-    feature_var_decl(FeatureType, NN, Card),
+    feature_var_decl(FeatureType, NN, Card, HierarchyPosition),
     %%% Here we would handle the attrs
     feature_attr_sentences(Attrs, NN),
     feature_group_sentences(Gs, NN).
@@ -63,11 +64,12 @@ feature_attr_var_decl(K, nil, NN) --> [""].
 normalize_name([FirstN|Ns], NN) :-
     foldl([E,S,NS]>>(string_concat(S,".",S1),string_concat(S1,E,NS)),Ns,FirstN,NN).
 
-feature_var_decl(boolean, N, _) --> ["(bool ", N, ")"].
-feature_var_decl(integer, N, nil) --> ["(int ", N, " )"].
-feature_var_decl(integer, N, card(From,To)) --> ["(int (", From, " ", To, ") ", N, " )"].
-feature_var_decl(string, _, _).
-feature_var_decl(real, _, _).
+feature_var_decl(boolean, N, _, root) --> ["(bool ", N, ")"].
+feature_var_decl(boolean, N, _, leaf) --> ["(bool ", N, ")", "(= ", N, "1)"].
+feature_var_decl(integer, N, nil, _) --> ["(int ", N, " )"].
+feature_var_decl(integer, N, card(From,To), _) --> ["(int (", From, " ", To, ") ", N, " )"].
+feature_var_decl(string, _, _, _).
+feature_var_decl(real, _, _, _).
 
 feature_group_sentences(nil, _) --> [].
 feature_group_sentences([], _) --> [].
