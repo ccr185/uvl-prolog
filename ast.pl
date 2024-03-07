@@ -154,7 +154,7 @@ constraint_sentence(and_constraint(C1,C2)) -->
 constraint_sentence(or_constraint(C1,C2)) -->
     ["(or "], constraint_sentence(C1), [" "], constraint_sentence(C2), [" )"].
 constraint_sentence(impl_constraint(C1,C2)) -->
-    ["(if ("], constraint_sentence(C1), [") ("], constraint_sentence(C2), [") )"].
+    ["(if "], constraint_sentence(C1), [" "], constraint_sentence(C2), [" )"].
 constraint_sentence(eq_constraint(C1,C2)) -->
     ["(iff "], constraint_sentence(C1), [" "], constraint_sentence(C2), [" )"].
 
