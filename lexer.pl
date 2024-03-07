@@ -13,6 +13,7 @@
 :- use_module(library(apply)).
 :- use_module(library(apply_macros)).
 :- use_module(library(portray_text)).
+:- use_module(reif).
 
 %% Main entrypoint for the Lexer
 %% defines lex_uvl(-Tokens,+File) that, given a
@@ -21,6 +22,10 @@
 lex_uvl(Tokens, File) :-
     phrase_from_file(tokenize(TokensCollected), File),
     flatten(TokensCollected, Tokens).
+
+test_kernel(T,R) :-
+    read_file_to_codes('/Users/ccr185/Downloads/dataset_15/linux-2.6.33.3.uvl',S,[]),
+    phrase(tokenize(T),S,R).
 
 tokenize(Tokens) -->
     tokenize_([0],Tokens).
@@ -189,40 +194,72 @@ single_char(Token) -->
 
 literal(float(Token)) --> float(Token), !.
 literal(integer(Token)) --> integer(Token), !.
+%% literal(Token) -->
+%%     string_without(".,-(){}[] \t\n\r", Codes),
+%%     {
+%%         (\+ length(Codes, 0)),
+%%         atom_codes(Atom, Codes),
+%%         atom_string(Atom, Str),
+%%         (
+%%             id_strict(Str)
+%%         ) -> (
+%%             Token = id_strict(Str)
+%%         ) ; (
+%%             (
+%%                 %(\+ length(Codes, 0)),
+%%                 %atom_codes(Atom, Codes),
+%%                 %atom_string(Atom, Str),
+%%                 id_not_strict(Str)
+%%             ) -> (
+%%                 Token = id_not_strict(Str)
+%%             ) ; (
+%%                 (
+%%                     normal_string(Str)
+%%                 ) -> (
+%%                     Token = normal_string(Str)
+%%                 ) ; (
+%%                     throw("Unrecognized string format")
+%%                 )
+%%             )
+%%         )
+%%     }, !.
+
 literal(Token) -->
     string_without(".,-(){}[] \t\n\r", Codes),
     {
-        \+ length(Codes, 0),
+        (\+ length(Codes, 0)),
         atom_codes(Atom, Codes),
         atom_string(Atom, Str),
-        (
-            id_strict(Str)
-        ) -> (
-            Token = id_strict(Str)
-        ) ; (
-            (
-                id_not_strict(Str)
-            ) -> (
-                Token = id_not_strict(Str)
-            ) ; (
-                (
-                    normal_string(Str)
-                ) -> (
-                    Token = normal_string(Str)
-                ) ; (
+        if_(
+            id_strict(Str),
+            Token = id_strict(Str),
+            if_(
+                %(\+ length(Codes, 0)),
+                %atom_codes(Atom, Codes),
+                %atom_string(Atom, Str),
+                id_not_strict(Str),
+                Token = id_not_strict(Str),
+                if_(
+                    normal_string(Str),
+                    Token = normal_string(Str),
                     throw("Unrecognized string format")
                 )
             )
         )
-    }, !.
+    }.
 
-id_strict(Str) :-
+
+id_strict(Str, true) :-
     re_match(
-        "^[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\|\\?|\'|ä|ü|ö|ß|;)*(?![\\)\\]\\}])$",
+        %"^[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\|\\?|\'|ä|ü|ö|ß|;)*(?![\\)\\]\\}])$",
+        "^[a-zA-Z]([a-zA-Z0-9_]|#|%|\\|\\?|\'|;)*(?![\\)\\]\\}])$",
         Str,[anchored(true),utf(true)]
     ).
-id_not_strict(Str) :- re_match("\"[^\r\n\".]+\"$", Str, [anchored(true),utf(true)]).
-normal_string(Str) :- re_match("\'[^\r\n\'.]+\'$", Str, [anchored(true),utf(true)]).%% %
+id_strict(_, false).
+id_not_strict(Str, true) :- re_match("^\"[^\r\n\"]+\"$", Str, [anchored(true),utf(true)]).
+id_not_strict(_, false).
+normal_string(Str, true) :- re_match("\'[^\r\n\']+\'$", Str, [anchored(true),utf(true)]).%% %
+normal_string(_, false).
 
 %id_strict(Str) :- Str =~ '[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\?|\\|\'|ä|ü|ö|ß|;)*(?![\)\]\}])$', !.
 %id_not_strict(Str) :- Str =~ '\"[^\r\n\".]+\"$', !.
