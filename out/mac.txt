@@ -1,0 +1,39 @@
+ast(header(namespace([]),includes([]),imports([])),
+    [ feature(name(["Sandwich"]),
+	      type(boolean),
+	      cardinality(nil),
+	      attributes(nil),
+	      group([ mandatory(
+			  [ feature(name(["Bread"]),
+				    type(boolean),
+				    cardinality(nil),
+				    attributes(nil),
+				    group(nil))
+			  ]),
+		      optional(
+			  [ feature(name(["Sauce"]),
+				    type(boolean),
+				    cardinality(nil),
+				    attributes(nil),
+				    group([ alternative(
+						[ feature(name(["Ketchup"]),
+							  type(boolean),
+							  cardinality(nil),
+							  attributes(nil),
+							  group(nil)),
+						  feature(name(["Mustard"]),
+							  type(boolean),
+							  cardinality(nil),
+							  attributes(nil),
+							  group(nil))
+						])
+					  ])),
+			    feature(name(["Cheese"]),
+				    type(boolean),
+				    cardinality(nil),
+				    attributes(nil),
+				    group(nil))
+			  ])
+		    ]))
+    ],
+    nil)
