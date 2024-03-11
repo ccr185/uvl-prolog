@@ -145,7 +145,18 @@ constraint_sentences([C|Cs]) -->
     constraint_sentences(Cs).
 
 constraint_sentence(equation(E)) --> render_equation(E).
-constraint_sentence(literal_constraint(C)) --> {normalize_name(C,CN)}, [CN].
+%%N.B. Something tricky happens with this constraint,
+%%It just so happens that many translations to UVL treat the literal
+%%as a reified constraint, and this trips up the
+%%clif parser because a name by itself is generally not allowed
+%%since it implies Var = 1. Therefore,
+%%for sanity's sake, it makes sense to use the "true constraint"
+%%that works for both the propositional case and the more general
+%%integer case (and, in particular, it makes the assumption that
+%%even if the constraint is an integer, 0 means deselected).
+%% constraint_sentence(literal_constraint(C)) --> {normalize_name(C,CN)}, [CN].
+constraint_sentence(literal_constraint(C)) -->
+    {normalize_name(C,CN)}, ["(>= ", CN, " 1 )"].
 constraint_sentence(paren_constraint(C)) --> constraint_sentence(C).
 constraint_sentence(not_constraint(C)) -->
     ["(not "], constraint_sentence(C), [" )"].
