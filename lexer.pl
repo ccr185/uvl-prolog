@@ -14,6 +14,7 @@
 :- use_module(library(apply_macros)).
 :- use_module(library(portray_text)).
 :- use_module(reif).
+:- use_module(library(debug)).
 
 %% Main entrypoint for the Lexer
 %% defines lex_uvl(-Tokens,+File) that, given a
@@ -24,7 +25,7 @@ lex_uvl(Tokens, File) :-
     flatten(TokensCollected, Tokens).
 
 test_kernel(T,R) :-
-    read_file_to_codes('/Users/ccr185/Downloads/dataset_15/linux-2.6.33.3.uvl',S,[]),
+    read_file_to_codes('/Users/ccr185/Downloads/dataset_15/min.uvl',S,[]),
     phrase(tokenize(T),S,R).
 
 tokenize(Tokens) -->
@@ -33,7 +34,7 @@ tokenize(Tokens) -->
 %% FIXME: This definition and the one at the bottom seem to conflict.
 tokenize_(RemainingIndentStack, DedentTokens) --> eos, !,
     {
-        format("Remaining Indent Stack: ~w", [RemainingIndentStack]),
+        debug(lexer, "Remaining Indent Stack: ~w", [RemainingIndentStack]),
         length(RemainingIndentStack, Length),
         dedentStack(Length, RemainingIndentStack, DedentTokens)
     }.
@@ -58,7 +59,7 @@ tokenize_([IndentLevel|Is], [LineToks|Tokens]) -->
                 % emit an indent token before the line tokens
                 LineToks = [indent | LineToks0],
                 IndentStack = [LineIndent,IndentLevel|Is],
-                writeln("emit indent token")
+                debug(lexer, "emit indent token", [])
             ) ; (
                 % Case 3: Indentation is lower than stack
                 % check that this level exists
@@ -76,7 +77,7 @@ tokenize_([IndentLevel|Is], [LineToks|Tokens]) -->
                 append(Dedents, LineToks0, LineToks),
                 %LineToks = [dedent | LineToks0],
                 IndentStack = NewStack,
-                format("emit ~w dedent tokens \n", [NPopped])
+                debug(lexer, "emit ~w dedent tokens \n", [NPopped])
             )
         )
     },
@@ -86,7 +87,7 @@ tokenize_([IndentLevel|Is], [LineToks|Tokens]) -->
 tokenize_(RemainingIndentStack, DedentTokens) -->
     [], !,
     {
-        format("Remaining Indent Stack: ~w", [RemainingIndentStack]),
+        debug(lexer, "Remaining Indent Stack: ~w", [RemainingIndentStack]),
         length(RemainingIndentStack, Length),
         dedentStack(Length, RemainingIndentStack, DedentTokens)
     }.
@@ -123,10 +124,10 @@ line_tokens([T|Ts]) -->
 line_tokens([]) --> [], !.
 
 next_token(Token) -->
-    (keyword(Token), !, {format("read keyword ~w \n", [Token])}) |
-    (double_char(Token), !, {format("read double_char ~w \n", [Token])}) |
-    (single_char(Token), !, {format("read single_char ~w \n", [Token])}) |
-    (literal(Token), !, {format("read literal ~w \n", [Token])}).
+    (keyword(Token), !, {debug(lexer, "read keyword ~w \n", [Token])}) |
+    (double_char(Token), !, {debug(lexer, "read double_char ~w \n", [Token])}) |
+    (single_char(Token), !, {debug(lexer, "read single_char ~w \n", [Token])}) |
+    (literal(Token), !, {debug(lexer, "read literal ~w \n", [Token])}).
 
 % Keywords
 keyword(Token) -->
@@ -258,7 +259,7 @@ id_strict(Str, true) :-
 id_strict(_, false).
 id_not_strict(Str, true) :- re_match("^\"[^\r\n\"]+\"$", Str, [anchored(true),utf(true)]).
 id_not_strict(_, false).
-normal_string(Str, true) :- re_match("\'[^\r\n\']+\'$", Str, [anchored(true),utf(true)]).%% %
+normal_string(Str, true) :- re_match("^\'[^\r\n\']+\'$", Str, [anchored(true),utf(true)]).%% %
 normal_string(_, false).
 
 %id_strict(Str) :- Str =~ '[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\?|\\|\'|ä|ü|ö|ß|;)*(?![\)\]\}])$', !.

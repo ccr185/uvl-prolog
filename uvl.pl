@@ -136,21 +136,48 @@ constraint_attr(Cs) --> [constraints], constraint_list(Cs).
 :- table constraint/3.
 
 constraint(equation(E)) --> equation(E).
-constraint(paren_constraint(C)) --> [lparen], constraint(C), [rparen].
-constraint(not_constraint(C)) --> [not], constraint(C).
-constraint(and_constraint(C1,C2)) --> constraint(C1), [and], constraint(C2).
-constraint(or_constraint(C1,C2)) --> constraint(C1), [or], constraint(C2).
-constraint(impl_constraint(C1,C2)) --> constraint(C1), [impl], constraint(C2).
-constraint(eq_constraint(C1,C2)) --> constraint(C1), [equivalence], constraint(C2).
+constraint(paren_constraint(C)) -->
+    [lparen], constraint(C),
+    %{abolish_all_tables},
+    [rparen].
+constraint(not_constraint(C)) --> [not], constraint(C). %, {abolish_all_tables}.
+constraint(and_constraint(C1,C2)) -->
+    constraint(C1), [and],
+    %{abolish_all_tables},
+    constraint(C2).
+    %{abolish_all_tables}.
+constraint(or_constraint(C1,C2)) -->
+    constraint(C1),
+    %{abolish_all_tables},
+    [or], constraint(C2).
+    %, {abolish_all_tables}.
+constraint(impl_constraint(C1,C2)) -->
+    constraint(C1),
+    %{abolish_all_tables},
+    [impl], constraint(C2).
+    %, {abolish_all_tables}.
+constraint(eq_constraint(C1,C2)) -->
+    constraint(C1),
+    %{abolish_all_tables},
+    [equivalence], constraint(C2).
+    %{abolish_all_tables}.
 constraint(literal_constraint(C)) --> fully_qualified_reference(C).
 
 constraint_list(Cs) --> [lbracket], constraint_list_(Cs), [rbracket].
-constraint_list_([C|Cs]) --> constraint(C), [comma], constraint_list_(Cs).
-constraint_list_([C]) --> constraint(C).
+constraint_list_([C|Cs]) -->
+    constraint(C),
+    %{abolish_all_tables},
+    [comma], constraint_list_(Cs).
+constraint_list_([C]) --> constraint(C).%, {abolish_all_tables}.
 constraint_list_([]) --> [].
 
 constraints(Cs) --> [constraints, indent], constraints_(Cs), [dedent].
-constraints_([C|Cs]) --> constraint(C), constraints_(Cs).
+constraints_([C|Cs]) -->
+    constraint(C),
+    {debug(parser,'Parsed constraint ~w', [C])},
+    %{abolish_table_subgoals(constraint(C))},
+    {abolish_table_subgoals(constraint(_,_,_))},
+    constraints_(Cs).
 constraints_([]) --> [].
 
 :- table equation/3.
