@@ -133,7 +133,7 @@ group_spec(Fs) --> [indent], features_(Fs), {length(Fs,L), L > 0}, [dedent].
 constraint_attr(C) --> [constraint], constraint(C).
 constraint_attr(Cs) --> [constraints], constraint_list(Cs).
 
-:- table constraint/3.
+%:- table constraint/3.
 
 constraint(equation(E)) --> equation(E).
 constraint(paren_constraint(C)) -->
@@ -171,25 +171,60 @@ constraint_list_([C|Cs]) -->
 constraint_list_([C]) --> constraint(C).%, {abolish_all_tables}.
 constraint_list_([]) --> [].
 
+% TODO: Handle all the occurrences of contraint//1 so that it point here instead
+
+c(constraint(op(Op), left(equation(E)), right(C), next(N))) --> equation(E), cp(tail(op(Op), C, N)).
+c(constraint(op(Op), left(paren(CL)), right(CR), next(N))) --> [lparen], c(CL), [rparen], cp(tail(op(Op), CR, N)).
+c(constraint(op(Op), left(not(CN)), right(C), next(N))) --> [not], c(CN), cp(tail(op(Op), C, N)).
+c(constraint(op(Op), left(literal(L)), right(C), next(N))) --> fully_qualified_reference(L), cp(tail(op(Op), C, N)).
+
+cp(tail(op(and), C, Next)) --> [and], c(C), cp(Next).
+cp(tail(op(or), C, Next)) --> [or], c(C), cp(Next).
+cp(tail(op(impl), C, Next)) --> [impl], c(C), cp(Next).
+cp(tail(op(equivalence), C, Next)) --> [equivalence], c(C), cp(Next).
+cp(tail(op(nil), nil, nil)) --> [].
+
+
+
 constraints(Cs) --> [constraints, indent], constraints_(Cs), [dedent].
 constraints_([C|Cs]) -->
-    constraint(C),
-    {debug(parser,'Parsed constraint ~w', [C])},
+    %constraint(C),
+    c(C),
+    {debug(parser,'Parsed constraint ~w', [C])}, %{false},
     %{abolish_table_subgoals(constraint(C))},
-    {abolish_table_subgoals(constraint(_,_,_))},
+    {abolish_private_tables},
+    {abolish_table_subgoals(constraint(_,_,_)), abolish_table_subgoals(equation(_,_,_)), abolish_table_subgoals(expression(_,_,_))},
     constraints_(Cs).
 constraints_([]) --> [].
 
-:- table equation/3.
+%:- table equation/3.
 
-equation(equal(E1,E2)) --> expression(E1), [equal], expression(E2).
-equation(lt(E1,E2)) --> expression(E1), [lt], expression(E2).
-equation(gt(E1,E2)) --> expression(E1), [gt], expression(E2).
-equation(lte(E1,E2)) --> expression(E1), [lte], expression(E2).
-equation(gte(E1,E2)) --> expression(E1), [gte], expression(E2).
-equation(neq(E1,E2)) --> expression(E1), [neq], expression(E2).
+equation(equal(E1,E2)) -->
+    %expression(E1),
+    e, [equal], e.
+    %expression(E2).
+equation(lt(E1,E2)) -->
+    %expression(E1),
+    e, [lt], e.
+    %expression(E2).
+equation(gt(E1,E2)) -->
+    %expression(E1),
+    e, [gt], e.
+    %expression(E2).
+equation(lte(E1,E2)) -->
+    %expression(E1),
+    e, [lte], e.
+    %expression(E2).
+equation(gte(E1,E2)) -->
+    %expression(E1),
+    e, [gte], e.
+    %expression(E2).
+equation(neq(E1,E2)) -->
+    %expression(E1),
+    e, [neq], e.
+    %expression(E2).
 
-:- table expression/3.
+%:- table expression/3.
 
 expression(E) --> ([float(E)] | [integer(E)] | [string(E)]).
 expression(E) --> aggregate_function(E).
@@ -199,6 +234,20 @@ expression(add(E1,E2)) --> expression(E1), [add], expression(E2).
 expression(sub(E1,E2)) --> expression(E1), [sub], expression(E2).
 expression(mul(E1,E2)) --> expression(E1), [mul], expression(E2).
 expression(div(E1,E2)) --> expression(E1), [div], expression(E2).
+
+% TODO: Fix expressions and create the parse tree for them.
+
+e --> [float(E)], ep.
+e --> [integer(E)], ep.
+e --> [string(E)], ep.
+e --> aggregate_function(E), ep.
+e --> [lparen], e, [rparen], ep.
+
+ep --> [add], e, ep.
+ep --> [sub], e, ep.
+ep --> [mul], e, ep.
+ep --> [div], e, ep.
+ep --> [].
 
 aggregate_function(sum(ref(R),ref_op(ROP))) -->
     [sum, lparen], optional((fully_qualified_reference(ROP),[comma]), {ROP = nil}),

@@ -1,6 +1,6 @@
 :- module(ast, [print_clif_from_ast/2]).
 :- set_prolog_flag(double_quotes, string).
-:- set_portray_text(enabled, true).
+%:- set_portray_text(enabled, true).
 :- use_module(library(dcg/high_order)).
 :- use_module(library(portray_text)).
 :- use_module(library(apply)).
@@ -11,11 +11,11 @@
 
 print_clif_from_ast(File, CLIFS) :-
     parse(File, AST, []),
-    print_term(AST,[]), nl, nl,
+    %print_term(AST,[]), nl, nl,
     writeln("Parsing Complete"),
     clif_from_ast(CLIF, AST),
-    foldl([C,S,NS]>>string_concat(S,C,NS),CLIF,"",CLIFS),
-    print_term(CLIFS, []).
+    foldl([C,S,NS]>>string_concat(S,C,NS),CLIF,"",CLIFS).
+    %print_term(CLIFS, []).
 
 
 
@@ -141,7 +141,8 @@ feature_group(feature(_,_,_,_,group(FeatGroups)), FeatGroups).
 constraint_sentences(nil) --> [].
 constraint_sentences([]) --> [].
 constraint_sentences([C|Cs]) -->
-    constraint_sentence(C),
+    %% constraint_sentence(C),
+    c_s(C),
     constraint_sentences(Cs).
 
 constraint_sentence(equation(E)) --> render_equation(E).
@@ -168,6 +169,19 @@ constraint_sentence(impl_constraint(C1,C2)) -->
     ["(if "], constraint_sentence(C1), [" "], constraint_sentence(C2), [" )"].
 constraint_sentence(eq_constraint(C1,C2)) -->
     ["(iff "], constraint_sentence(C1), [" "], constraint_sentence(C2), [" )"].
+
+%%% New constraint rendering
+%%% TODO: Handle equations and make it render left-associatively :)
+c_s(constraint(op(and),left(L),right(R),next(_))) --> ["(and "], c_s_t(L), [" "], c_s(R) ,[" )"].
+c_s(constraint(op(or),left(L),right(R),next(_))) --> ["(or "], c_s_t(L), [" "], c_s(R), [" )"].
+c_s(constraint(op(impl),left(L),right(R),next(_))) --> ["(if "], c_s_t(L), [" "], c_s(R), [" )"].
+c_s(constraint(op(equivalence),left(L),right(R),next(_))) --> ["(iff "], c_s_t(L), [" "], c_s(R), [" )"].
+c_s(constraint(op(nil),left(C),right(_),next(_))) --> c_s_t(C).
+
+c_s_t(paren(C)) --> ["( "], c_s(C), [" )"].
+c_s_t(not(C)) --> ["(not "], c_s(C), [" )"].
+c_s_t(literal(L)) --> {normalize_name(L,LN)}, ["(>= ", LN, " 1 )"].
+
 
 render_equation(equal(E1,E2)) -->
     ["(= "], render_expression(E1), [" "], render_expression(E2), [")"].
