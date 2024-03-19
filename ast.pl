@@ -14,8 +14,9 @@ print_clif_from_ast(File, CLIFS) :-
     %print_term(AST,[]), nl, nl,
     writeln("Parsing Complete"),
     clif_from_ast(CLIF, AST),
-    foldl([C,S,NS]>>string_concat(S,C,NS),CLIF,"",CLIFS).
+    %foldl([C,S,NS]>>string_concat(S,C,NS),CLIF,"",CLIFS).
     %print_term(CLIFS, []).
+    atomics_to_string(CLIF,CLIFS).
 
 
 
