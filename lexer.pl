@@ -226,7 +226,8 @@ literal(integer(Token)) --> integer(Token), !.
 %%     }, !.
 
 literal(Token) -->
-    string_without(".,-(){}[] \t\n\r", Codes),
+    %string_without(".,-(){}[] \t\n\r", Codes),
+    string_without(".,(){}[] \t\n\r", Codes),
     {
         (\+ length(Codes, 0)),
         atom_codes(Atom, Codes),
@@ -257,9 +258,9 @@ id_strict(Str, true) :-
         Str,[anchored(true),utf(true)]
     ).
 id_strict(_, false).
-id_not_strict(Str, true) :- re_match("^\"[^\r\n\"]+\"$", Str, [anchored(true),utf(true)]).
+id_not_strict(Str, true) :- re_match("^\"[^\r\n\".]+\"$", Str, [anchored(true),utf(true)]).
 id_not_strict(_, false).
-normal_string(Str, true) :- re_match("^\'[^\r\n\']+\'$", Str, [anchored(true),utf(true)]).%% %
+normal_string(Str, true) :- re_match("^\'[^\r\n\'.]+\'$", Str, [anchored(true),utf(true)]).%% %
 normal_string(_, false).
 
 %id_strict(Str) :- Str =~ '[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\?|\\|\'|ä|ü|ö|ß|;)*(?![\)\]\}])$', !.
