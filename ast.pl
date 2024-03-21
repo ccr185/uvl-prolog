@@ -3,9 +3,9 @@
 %:- set_portray_text(enabled, true).
 :- use_module(library(dcg/high_order)).
 :- use_module(library(portray_text)).
+:- use_module(library(yall)).
 :- use_module(library(apply)).
 :- use_module(library(apply_macros)).
-:- use_module(library(yall)).
 :- use_module(library(error)).
 :- use_module(uvl).
 
@@ -179,7 +179,9 @@ c_s(constraint(op(impl),left(L),right(R),next(_))) --> ["(if "], c_s_t(L), [" "]
 c_s(constraint(op(equivalence),left(L),right(R),next(_))) --> ["(iff "], c_s_t(L), [" "], c_s(R), [" )"].
 c_s(constraint(op(nil),left(C),right(_),next(_))) --> c_s_t(C).
 
-c_s_t(paren(C)) --> ["( "], c_s(C), [" )"].
+c_s_t(paren(C)) -->
+    %["( "],
+    c_s(C). %, [" )"].
 c_s_t(not(C)) --> ["(not "], c_s(C), [" )"].
 c_s_t(literal(L)) --> {normalize_name(L,LN)}, ["(>= ", LN, " 1 )"].
 
