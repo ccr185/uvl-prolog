@@ -175,6 +175,11 @@ constraint_list_([]) --> [].
 
 c(constraint(op(Op), left(equation(E)), right(C), next(N))) --> equation(E), cp(tail(op(Op), C, N)).
 c(constraint(op(Op), left(paren(CL)), right(CR), next(N))) --> [lparen], c(CL), [rparen], cp(tail(op(Op), CR, N)).
+%%%The not is super problematic because it recurses and breaks the operand chain
+%%%The best way to deal with it is to bind it super tightly to the three actual Cs
+%%% TODO: Make suret this can be generalized correctly!!!
+c(constraint(op(Op), left(not(CN)), right(C), next(N))) --> [not], fully_qualified_reference(R),
+                                                            {CN = constraint(op(nil),left(literal(R)),right(nil),next(nil))}, cp(tail(op(Op), C, N)).
 c(constraint(op(Op), left(not(CN)), right(C), next(N))) --> [not], c(CN), cp(tail(op(Op), C, N)).
 c(constraint(op(Op), left(literal(L)), right(C), next(N))) --> fully_qualified_reference(L), cp(tail(op(Op), C, N)).
 
@@ -184,13 +189,65 @@ cp(tail(op(impl), C, Next)) --> [impl], c(C), cp(Next).
 cp(tail(op(equivalence), C, Next)) --> [equivalence], c(C), cp(Next).
 cp(tail(op(nil), nil, nil)) --> [].
 
+test_constraint(C) :-
+    C = constraint(
+        op(or),
+        left(literal([TREE_RCU])),
+        right(constraint(
+            op(or),
+            left(literal([TREE_PREEMPT_RCU])),
+            right(constraint(
+                op(or),
+                left(not(constraint(
+                    op(nil),
+                    left(literal([RCU_TRACE])),
+                    right(nil),
+                    next(nil)))),
+                right(constraint(
+                    op(or),
+                    left(not(constraint(
+                        op(nil),
+                        left(literal([TEST])),
+                        right(nil),
+                        next(nil)))),
+                    right(constraint(
+                        op(nil),
+                        left(literal([T2])),
+                        right(nil),
+                        next(nil))),
+                    next(tail(op(nil),nil,nil)))),
+                next(tail(op(nil),nil,nil)))),
+            next(tail(op(nil),nil,nil)))),
+        next(tail(op(nil),nil,nil))).
 
+test_constraint2(C) :-
+    C = a.
+
+rebalance_constraint(C, RC) :-
+    r_c(C,RC).
+
+r_c(constraint(op(O),left(L),right(nil),next(N)),constraint(op(O),left(L),right(nil),next(N))).
+r_c(constraint(op(O),left(L),right(R),next(N)), RC) :-
+    dif(R,nil),
+    l_r(constraint(op(O),left(L),right(R),next(N)),RC0),
+    r_c(RC0,RC).
+
+%left rotate
+l_r(constraint(op(nil),left(L),right(R),next(N)), constraint(op(nil),left(L),right(R),next(N))).
+l_r(constraint(op(Op0), left(L0), right(R0), next(N0)), constraint(op(Op),left(L),right(R),next(N))) :-
+    dif(Op0,nil), R0 = nil, Op = Op0, L = L0, R = R0, N0 = N.
+l_r(constraint(op(Op0), left(L0), right(R0), next(N0)), constraint(op(Op),left(L),right(R),next(N1))) :-
+    dif(R0,nil),
+    R0 = constraint(op(Op),left(L1),right(R1),next(N1)),
+    L = constraint(op(Op0),left(L0),right(L1),next(N0)),
+    R = R1.
 
 constraints(Cs) --> [constraints, indent], constraints_(Cs), [dedent].
 constraints_([C|Cs]) -->
     %constraint(C),
-    c(C),
-    {debug(parser,'Parsed constraint ~w', [C])}, %{false},
+    c(C0),
+    {debug(parser,'Parsed constraint ~w', [C0])}, {r_c(C0,C)},
+    {debug(parser,'Rebalanced to ~w',[C])},
     %{abolish_table_subgoals(constraint(C))},
     {abolish_private_tables},
     {abolish_table_subgoals(constraint(_,_,_)), abolish_table_subgoals(equation(_,_,_)), abolish_table_subgoals(expression(_,_,_))},
