@@ -186,10 +186,10 @@ c_s_t(not(C)) --> ["(not "], c_s(C), [" )"].
 c_s_t(literal(L)) --> {normalize_name(L,LN)}, ["(>= ", LN, " 1 )"].
 
 %%%%%%%%%%%%%%%%%%%Rebalanced
-c_s_r(constraint(op(and),left(L),right(R),next(_))) --> ["(and "], c_s_r(L), [" "], c_s_t_r(R) ,[" )"].
-c_s_r(constraint(op(or),left(L),right(R),next(_))) --> ["(or "], c_s_r(L), [" "], c_s_t_r(R), [" )"].
-c_s_r(constraint(op(impl),left(L),right(R),next(_))) --> ["(if "], c_s_r(L), [" "], c_s_t_r(R), [" )"].
-c_s_r(constraint(op(equivalence),left(L),right(R),next(_))) --> ["(iff "], c_s_r(L), [" "], c_s_t_r(R), [" )"].
+c_s_r(constraint(op(and),left(L),right(R),next(_))) --> ["(and "], c_s_r(L), [" "], c_s_r(R) ,[" )"].
+c_s_r(constraint(op(or),left(L),right(R),next(_))) --> ["(or "], c_s_r(L), [" "], c_s_r(R), [" )"].
+c_s_r(constraint(op(impl),left(L),right(R),next(_))) --> ["(if "], c_s_r(L), [" "], c_s_r(R), [" )"].
+c_s_r(constraint(op(equivalence),left(L),right(R),next(_))) --> ["(iff "], c_s_r(L), [" "], c_s_r(R), [" )"].
 c_s_r(constraint(op(nil),left(L),right(_),next(_))) --> c_s_r(L).
 c_s_r(literal(L)) --> c_s_t_r(literal(L)).
 c_s_r(not(C)) --> c_s_t_r(not(C)).

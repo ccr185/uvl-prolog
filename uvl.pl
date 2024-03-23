@@ -221,7 +221,39 @@ test_constraint(C) :-
         next(tail(op(nil),nil,nil))).
 
 test_constraint2(C) :-
-    C = a.
+    C = constraint(
+        op(and),
+        left(paren(constraint(
+            op(or),
+            left(literal(["\"64BIT\""])),
+            right(constraint(
+                op(nil),
+                left(literal(["X86_32"])),
+                right(nil),
+                next(nil))),
+            next(tail(op(nil), nil, nil))))),
+        right(constraint(
+            op(nil),
+            left(paren(constraint(
+                op(or),
+                left(not(constraint(
+                    op(nil),
+                    left(literal(["X86_32"])),
+                    right(nil),
+                    next(nil)))),
+                right(constraint(
+                    op(nil),
+                    left(not(constraint(
+                        op(nil),
+                        left(literal(["\"64BIT\""])),
+                        right(nil),
+                        next(nil)))),
+                    right(nil),
+                    next(nil))),
+                next(tail(op(nil), nil, nil))))),
+            right(nil),
+            next(nil))),
+        next(tail(op(nil), nil, nil))).
 
 rebalance_constraint(C, RC) :-
     r_c(C,RC).
