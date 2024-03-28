@@ -25,7 +25,7 @@ lex_uvl(Tokens, File) :-
     flatten(TokensCollected, Tokens).
 
 test_kernel(T,R) :-
-    read_file_to_codes('/Users/ccr185/Downloads/dataset_15/min.uvl',S,[]),
+    read_file_to_codes('/home/kaiser185/Downloads/dataset_9/Bench/automotive02_01.uvl',S,[]),
     phrase(tokenize(T),S,R).
 
 tokenize(Tokens) -->
@@ -34,7 +34,7 @@ tokenize(Tokens) -->
 %% FIXME: This definition and the one at the bottom seem to conflict.
 tokenize_(RemainingIndentStack, DedentTokens) --> eos, !,
     {
-        debug(lexer, "Remaining Indent Stack: ~w", [RemainingIndentStack]),
+        debug(lexer, "Remaining Indent Stack 2: ~w", [RemainingIndentStack]),
         length(RemainingIndentStack, Length),
         dedentStack(Length, RemainingIndentStack, DedentTokens)
     }.
@@ -66,8 +66,10 @@ tokenize_([IndentLevel|Is], [LineToks|Tokens]) -->
                 % emit a dedent token
                 % TODO: Add error checking and throw an error if
                 % there's a problem.
-                member(LineIndent, Is),
-                drop_higher(Is, LineIndent, NewStack, NPopped0),
+                % HACK: Remove sanity check of whether the indent does exist.
+                %member(LineIndent, Is),
+                ( drop_higher(Is, LineIndent, NewStack, NPopped0), ! ;
+                drop_higher_unsafe([IndentLevel|Is], LineIndent, NewStack, NPopped0) ),
                 %Since we are 0 indexing and we are
                 %dropping with the last indent already removed
                 %we always drop N+1
@@ -87,7 +89,7 @@ tokenize_([IndentLevel|Is], [LineToks|Tokens]) -->
 tokenize_(RemainingIndentStack, DedentTokens) -->
     [], !,
     {
-        debug(lexer, "Remaining Indent Stack: ~w", [RemainingIndentStack]),
+        debug(lexer, "Remaining Indent Stack 1: ~w", [RemainingIndentStack]),
         length(RemainingIndentStack, Length),
         dedentStack(Length, RemainingIndentStack, DedentTokens)
     }.
@@ -96,6 +98,15 @@ tokenize_(RemainingIndentStack, DedentTokens) -->
 drop_higher(OrigStack, Elem, NewStack, Pos) :-
     nth0(Pos,OrigStack, Elem),
     drop(Pos, OrigStack, NewStack), !.
+%We are not certain that the element is in the list
+drop_higher_unsafe(OrigStack, Elem, NewStack, Pos) :-
+    debug(lexer, "Dropping higher w/ ~w ~w", [OrigStack, Elem]),
+    %get the number of indents between the line indentation and the last element.
+    OrigStack = [Top | _],
+    Pos is ((Top/8) - (Elem/8)) - 1,
+    Pos >= 0,
+    debug(lexer, "Dropping unexpected number of indents ~w", [Pos]),
+    include({Elem}/[LE]>>(LE #< Elem), OrigStack, NewStack), !, fail.
 
 %Based on https://www.swi-prolog.org/pldoc/doc/_SWI_/library/dialect/hprolog.pl
 drop(0, LastElements, LastElements) :- !.
@@ -254,7 +265,7 @@ literal(Token) -->
 id_strict(Str, true) :-
     re_match(
         %"^[a-zA-Z]([a-zA-Z0-9_]|#|§|%|\\|\\?|\'|ä|ü|ö|ß|;)*(?![\\)\\]\\}])$",
-        "^[a-zA-Z]([a-zA-Z0-9_]|#|%|\\|\\?|\'|;)*(?![\\)\\]\\}])$",
+        "^[a-zA-Z_]([a-zA-Z0-9_]|#|%|\\|\\?|\'|;)*(?![\\)\\]\\}])$",
         Str,[anchored(true),utf(true)]
     ).
 id_strict(_, false).

@@ -82,6 +82,7 @@ features_(
     optional(feature_cardinality(Card), {Card = nil}),
     optional(attributes(Attrs), {Attrs = nil}),
     optional(([indent], groups(Gs), [dedent]), {Gs = nil}),
+    {debug(parser, "Parsed Feature ~w", [N])},
     features_(Fs).
 features_([]) --> [].
 
